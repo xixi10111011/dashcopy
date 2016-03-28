@@ -21,7 +21,7 @@ CFLAGS="$EXTERNAL_CFLAGS"
 AC_LANG([C])
 
 # Checks for libraries.
-PKG_CHECK_MODULES([libcurl], [curl])
+PKG_CHECK_MODULES([curl], [libcurl >= 7.3])
 PKG_CHECK_MODULES([libxml2], [libxml-2.0])
 
 # Checks for header files.
