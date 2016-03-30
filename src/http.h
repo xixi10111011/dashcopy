@@ -17,6 +17,18 @@ extern int http_get_file(const char *url, const char *filename);
 
 /* internal */
 
+struct active_request_slot {
+    CURL *curl;
+    CURLcode curl_result;
+    long http_code;
+}；
+struct active_request_slot *get_active_slot(void);
+
+#define HTTP_REQEUST_FILE    0
+#define HTTP_REQEUST_BUFFER  1
+
+
+int http_request(const char *url, void *result, int target);
 
 
 
