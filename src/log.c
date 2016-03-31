@@ -1,15 +1,22 @@
 #include "log.h"
-#include "http.h"
 
 FILE *dbgstream;
 int debug_level;
 
-int main()
+int log_init()
 {
     dbgstream = fopen("test.log","w+");
+
+    if (!dbgstream)
+        return -1;
+
     debug_level = DBG;
-    http_init();
-    LOG(FATAL, "hello, dashcopy!\n");
+    return 0;
+}
+
+
+void log_cleanup()
+{
     fclose(dbgstream);
 }
 

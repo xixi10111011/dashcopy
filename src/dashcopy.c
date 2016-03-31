@@ -1,16 +1,15 @@
 #include "log.h"
 #include "http.h"
 
-FILE *dbgstream;
-int debug_level;
 
 int main()
 {
-    dbgstream = fopen("test.log","w+");
-    debug_level = DBG;
+    log_init();
     http_init();
     LOG(FATAL, "hello, dashcopy!\n");
-    fclose(dbgstream);
+    http_get_file("http://dash.edgesuite.net/dash264/TestCases/1a/netflix/exMPD_BIP_TC1.mpd","xxx.mpd");
+    http_cleanup();
+    log_cleanup();
 }
 
 

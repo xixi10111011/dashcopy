@@ -21,11 +21,14 @@ struct active_request_slot {
     CURL *curl;
     CURLcode curl_result;
     long http_code;
-}；
+    char url[256];
+};
 struct active_request_slot *get_active_slot(void);
+void free_active_slot(struct active_request_slot *slot);
+int run_one_slot(struct active_request_slot *slot);
 
-#define HTTP_REQEUST_FILE    0
-#define HTTP_REQEUST_BUFFER  1
+#define HTTP_REQUEST_FILE    0
+#define HTTP_REQUEST_BUFFER  1
 
 
 int http_request(const char *url, void *result, int target);
