@@ -1,3 +1,6 @@
+#ifndef _LOG_H_
+#define _LOG_H_
+
 #include <stdio.h>
 
 #define FATAL (1)
@@ -22,3 +25,5 @@ extern int debug_level;
 
 extern int log_init();
 extern void log_cleanup();
+
+#endif /* _LOG_H_ */
