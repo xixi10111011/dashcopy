@@ -4,6 +4,8 @@
 #define MPD_TYPE_STATIC 0
 #define MPD_TYPE_LIVE   1
 
+#define MPD_PARSE_OK        0
+#define MPD_PARSE_ERROR     1
 
 struct Range
 {
@@ -25,6 +27,20 @@ struct SegmentBaseType
     char *initialization;
 };
 
+struct SNode
+{
+    long long t;
+    long long d;
+    int r;
+
+    struct SNode *next;
+};
+
+
+struct SegmentTimelineNode 
+{
+    struct SNode *SNodes;
+};
 
 struct MultSegmentBaseType
 {
@@ -49,6 +65,36 @@ struct SegmentTemplateNode
     char *initialization;
 };
 
+struct RepresentationBaseType
+{
+
+};
+
+struct RepresentationNode
+{
+    char *id;
+    unsigned int bandwidth;
+    struct RepresentationBaseType *RepresentationBase;
+    struct SegmentBaseType        *SegmentBase;
+    struct SegmentListNode        *SegmentList;
+    struct SegmentTemplateNode    *SegmentTemplate;
+    char *BaseURL;
+    char *PathURI;
+    struct RepresentationNode *next;
+};
+
+struct AdaptationSetNode 
+{
+    struct RepresentationBaseType *RepresentationBase;
+    struct SegmentBaseType        *SegmentBase;
+    struct SegmentListNode        *SegmentList;
+    struct SegmentTemplateNode    *SegmentTemplate;
+    char *BaseURL;
+    char *PathURI;
+    struct RepresentationNode     *Representations;
+    struct AdaptationSetNode *next;
+};
+
 struct PeriodNode
 {
     long long start;
@@ -61,6 +107,7 @@ struct PeriodNode
     struct AdaptationSetNode *AdaptationSets;
 
     char *BaseURL;
+    char *PathURI;
 
     struct PeriodNode *next;
 };
@@ -69,6 +116,8 @@ struct MPDNode
 {
     int type;
     long long mediaPresentationDuration;
+    char *BaseURL;
+    char *PathURI;
     struct PeriodNode Periods;
 };
 

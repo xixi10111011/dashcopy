@@ -8,7 +8,7 @@ AM_CFLAGS += $(LIBCURL_CFLAGS)
 AM_CFLAGS += $(LIBXML2_CFLAGS)
 
 bin_PROGRAMS = dashcopy
-dashcopy_SOURCES = dashcopy.c http.c log.c
+dashcopy_SOURCES = dashcopy.c http.c log.c mpdparser.c
 dashcopy_LDADD = $(AM_LDFLAGS)
 dashcopy_LDADD += $(LIBCURL_LIBS)
 dashcopy_LDADD += $(LIBXML2_LIBS)
