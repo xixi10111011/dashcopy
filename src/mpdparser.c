@@ -35,11 +35,32 @@ void mpdparser_get_xml_prop_type(xmlNode *a_node, const char *property_name, int
     return;
 }
 
+int convert_to_ms(int decimals, int pos)
+{
+    int num = 1, den = 1;
+    int i = 3 - pos;
+
+    while (i < 0)
+    {
+        den *= 10;
+        i++;
+    }
+
+    while (i > 0)
+    {
+        num *= 10;
+        i--; 
+    }
+
+    return decimals * num / den;
+
+}
+
 /* to simplify, assume duration as just like "PT0H1M59.89S" */
 int mpdparser_parse_duration(const char *str, long long *value)
 {
     int len, pos, ret, read;
-    int hours = -1, minutes = -1, seconds = -1, decimals = -1;
+    int hours = -1, minutes = -1, seconds = -1, ms = -1;
     int have_ms = 0;
     long long tmp_value;
 
@@ -111,9 +132,17 @@ int mpdparser_parse_duration(const char *str, long long *value)
                 case 'S':
                    if (have_ms)
                    {
+                       ms = convert_to_ms(read, pos);
                    }
                    else
                    {
+                       if (seconds != -1)
+                       {
+                           LOG(FATAL, "second already set");
+                           goto erro;
+                       }
+
+                       seconds = read;
                    
                    }
                    break;
@@ -134,10 +163,18 @@ int mpdparser_parse_duration(const char *str, long long *value)
         
         }while(len > 0);
     
-    
-    
     }
 
+    if (hours == -1)
+        hours = 0;
+    if (minutes == -1)
+        minutes = 0;
+    if (seconds == -1)
+        seconds = 0;
+    if (ms == -1)
+        ms = 0;
+
+    tmp_value = ((((hours * 60) + minutes) * 60) + seconds) * 1000 + ms;
 
 error:
     return MPD_PARSE_ERROR;
