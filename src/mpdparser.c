@@ -175,6 +175,7 @@ int mpdparser_parse_duration(const char *str, long long *value)
         ms = 0;
 
     tmp_value = ((((hours * 60) + minutes) * 60) + seconds) * 1000 + ms;
+    return MPD_PARSE_OK;
 
 error:
     return MPD_PARSE_ERROR;
@@ -203,6 +204,26 @@ void mpdparser_get_xml_prop_duration(xmlNode *a_node, const char *property_name,
 
 
 
+int mpdparser_parse_baseURL_node(char **BaseURL， char **PathURI, char *ParentBaseURL, char *ParentPathURI, xmlNode *a_node)
+{
+    xmlChar *node_content = 0;
+
+    node_content = xmlNodeGetContent(a_node);
+
+    if (node_content)
+    {
+         
+    
+    }
+    else
+    {
+        LOG(FATAL, "%s have no content", a_node->name);
+        return MPD_PARSE_ERROR; 
+    }
+
+}
+
+
 int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdURL)
 {
     xmlNode *cur_node;
@@ -220,6 +241,7 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdUR
     mpdparser_get_xml_prop_type(a_node, "type", &new_mpd->type);
     if (new_mpd->type == MPD_TYPE_LIVE)
     {
+        LOG(FATAL, "live not supported yet");
         goto error;
     }
 
