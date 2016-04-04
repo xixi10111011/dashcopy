@@ -202,32 +202,152 @@ void mpdparser_get_xml_prop_duration(xmlNode *a_node, const char *property_name,
     }
 }
 
+int url_contains_scheme(const char *url)
+{
+    if (url[0] == 'h'
+        || url[1] == 't'
+        || url[2] == 't'
+        || url[3] == 'p')
+        return 1;
 
+    return 0;
+}
 
+/* assume everything goes well */
 int mpdparser_parse_baseURL_node(char **BaseURL， char **PathURI, char *ParentBaseURL, char *ParentPathURI, xmlNode *a_node)
 {
     xmlChar *node_content = 0;
+    char *curBaseURL = 0;
+    char *tmpBaseURL = 0;
+    char *tmpPathURI = 0;
 
     node_content = xmlNodeGetContent(a_node);
+    curBaseURL = (char *)node_content;
 
     if (node_content)
     {
-         
-    
+        if (url_contains_scheme(curBaseURL))
+        {
+            tmpBaseURL = (char *)malloc(strlen(curBaseURL) + 1);
+            if (!tmpBaseURL)
+            {
+                LOG(FATAL, "malloc failed"); 
+                goto error;
+            }
+            strncpy(tmpBaseURL, curBaseURL, strlen(curBaseURL) + 1);
+            
+        }    
+        else
+        {
+            tmpBaseURL = (char *)malloc(strlen(curBaseURL) + strlen(ParentBaseURL) + 1);
+            if (!tmpBaseURL)
+            {
+                LOG(FATAL, "malloc failed"); 
+                goto error;
+            }
+            memset(tmpBaseURL, 0, strlen(curBaseURL) + strlen(ParentBaseURL) + 1);
+            memcpy(tmpBaseURL, ParentBaseURL, strlen(ParentBaseURL));
+            memcpy(tmpBaseURL + strlen(ParentBaseURL), curBaseURL, strlen(curBaseURL));
+
+            tmpPathURI = (char *)malloc(strlen(curBaseURL) + strlen(ParentPathURI) + 1) 
+            if (!tmpPathURI)
+            {
+                LOG(FATAL, "malloc failed"); 
+                goto error;
+            }
+            memset(tmpPathURI, 0, strlen(curBaseURL) + strlen(ParentPathURI) + 1);
+            memcpy(tmpPathURI, ParentPathURI, strlen(ParentPathURI));
+            memcpy(tmpPathURI + strlen(ParentPathURI), curBaseURL, strlen(curBaseURL));
+        }
     }
     else
     {
         LOG(FATAL, "%s have no content", a_node->name);
-        return MPD_PARSE_ERROR; 
+        goto error;
     }
+    
+    *BaseURL = tmpBaseURL;
+    *PathURI = tmpPathURI;
+    xmlFree(node_content);
+    return MPD_PARSE_OK;
 
+error:
+    xmlFree(node_content);
+    if (tmpBaseURL)
+        free(tmpBaseURL);
+    if (tmpPathURI)
+        free(tmpPathURI);
+    return MPD_PARSE_ERROR;
 }
 
+int construct_mpd_baseurl(char **mpdBaseURL, const char *mpdURL)
+{
+    char *tmpurl = 0;
+    int last_slash_pos = 0;
+    int i = 0;
+
+    for (i = 0; mpdURL[i] != '\0'; i++)
+    {
+        if (mpdURL[i] == '/')
+            last_slash_pos = i;
+    }
+
+    tmpurl = (char *)malloc(last_slash_pos + 2);
+    if (!tmpurl)
+    {
+        LOG(FATAL, "malloc failed"); 
+        return MPD_PARSE_ERROR;
+    }
+    memset(tmpurl, 0, last_slash_pos + 2);
+    memcpy(tmpurl, mpdURL, last_slash_pos + 1);
+    *mpdBaseURL = tmpurl;
+    return MPD_PARSE_OK;
+}
+
+int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode *Parent, xmlNode *a_node)
+{
+    xmlNode *cur_node;
+    struct PeriodNode *new_period = 0;
+
+    new_period = (struct PeriodNode *)malloc(sizeof(struct PeriodNode));
+    if (!new_period)
+    {
+        LOG(FATAL, "malloc failed"); 
+        return MPD_PARSE_ERROR;
+    }
+
+    mpdparser_get_xml_prop_duration(a_node, "start", -1, &new_period->start);
+    mpdparser_get_xml_prop_duration(a_node, "duration", -1, &new_period->start);
+
+    for (cur_node = a_node->children; cur_node; cur_node = cur_node->next)
+    {
+        if (cur_node->type == XML_ELEMENT_NODE) 
+        {
+            if (xmlStrcmp(cur_node->name, (xmlChar *)"BaseURL") == 0 && !(new_mpd->BaseURL))       
+            {
+                if(mpdparser_parse_baseURL_node(&new_period->BaseURL, &new_period->PathURI, Parent->BaseURL, Parent->PathURI, cur_node))
+                {
+                    goto error; 
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
+            {
+                if (mpdparser_parse_period_node(&new_mpd->Periods, cur_node))
+                {
+                    goto error;
+                }
+            }
+        
+        }
+    
+
+}
 
 int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdURL)
 {
     xmlNode *cur_node;
     struct MPDNode *new_mpd;
+    char *mpdBaseURL;
 
     new_mpd =(struct MPDNode *) malloc(sizeof(struct MPDNode));
     if (!new_mpd)
@@ -248,35 +368,40 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdUR
     mpdparser_get_xml_prop_duration(a_node, "mediaPresentationDuration", 0, &new_mpd->mediaPresentationDuration);
 
 
-   for (cur_node = a_node->children; cur_node; cur_node = cur_node->next)
-   {
-       if (cur_node->type == XML_ELEMENT_NODE) 
-       {
-           if (xmlStrcmp(cur_node->name, (xmlChar *)"BaseURL") == 0 && !(new_mpd->BaseURL))       
-           {
-               if(mpdparser_parse_baseURL_node(&new_mpd->BaseURL, &new_mpd->PathURI, mpdURL, NULL, cur_node))
-               {
-                   goto error; 
-               }
-           }
-           else if (xmlStrcmp(cur_node->name, (xmlChar *)"Period") == 0)
-           {
-               if (mpdparser_parse_period_node(&new_mpd->Periods, cur_node))
-               {
-                   goto error;
-               }
-           }
-       
-       }
-   
-   }
+    if (construct_mpd_baseurl(&mpdBaseURL, mpdURL))
+    {
+        goto error;
+    }
 
-   *ptr = new_mpd;
-   return MPD_PARSE_OK;
+    for (cur_node = a_node->children; cur_node; cur_node = cur_node->next)
+    {
+        if (cur_node->type == XML_ELEMENT_NODE) 
+        {
+            if (xmlStrcmp(cur_node->name, (xmlChar *)"BaseURL") == 0 && !(new_mpd->BaseURL))       
+            {
+                if(mpdparser_parse_baseURL_node(&new_mpd->BaseURL, &new_mpd->PathURI, mpdURL, NULL, cur_node))
+                {
+                    goto error; 
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"Period") == 0)
+            {
+                if (mpdparser_parse_period_node(&new_mpd->Periods, new_mpd,  cur_node))
+                {
+                    goto error;
+                }
+            }
+        
+        }
+    
+    }
+
+    *ptr = new_mpd;
+    return MPD_PARSE_OK;
 
 error:
-   mpdparser_free_mpd_node(new_mpd);
-   return MPD_PARSE_ERROR;
+    mpdparser_free_mpd_node(new_mpd);
+    return MPD_PARSE_ERROR;
 }
 
 
