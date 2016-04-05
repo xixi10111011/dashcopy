@@ -304,6 +304,71 @@ int construct_mpd_baseurl(char **mpdBaseURL, const char *mpdURL)
     return MPD_PARSE_OK;
 }
 
+void mpdparser_free_seg_base_type(struct SegmentBaseType *segbase)
+{
+    if (!segbase) 
+        return;
+
+    if (segbase->indexRange)
+        free(segbase->indexRange);
+    if (segbase->initialization)
+        free(segbase->initialization);
+
+    free(segbase);
+}
+
+int mpdparser_parse_seg_base_type(struct SegmentBaseType **ptr, xmlNode *a_node, struct SegmentBaseType *parent)
+{
+    xmlNode *cur_node = 0;
+    struct SegmentBaseType *new_seg_base = 0;
+    char * tmp_str = 0;
+
+    new_seg_base = (struct SegmentBaseType *)malloc(sizeof(struct SegmentBaseType));
+    if (!new_seg_base)
+    {
+        LOG(FATAL, "malloc failed");
+        goto error;
+    }
+
+    new_seg_base->timeScale = 1;
+    new_seg_base->indexRange = 0;
+    new_seg_base->initialization = 0;
+
+    if (parent)
+    {
+        new_seg_base->timeScale = parent->timeScale; 
+        if (parent->indexRange) 
+        {
+            new_seg_base->indexRange = (struct indexRange *)malloc(sizeof(struct indexRange));
+            if (!new_seg_base->indexRange)
+            {
+                LOG(FATAL, "malloc failed"); 
+                goto error;
+            }
+            memcpy(new_seg_base->indexRange, parent->indexRange, sizeof(struct indexRange));
+        }
+
+        if (parent->initialization)
+        {
+            new_seg_base->initialization = (char *)malloc(strlen(parent->initialization) + 1);
+            if (!new_seg_base->initialization)
+            {
+                LOG(FATAL, "malloc failed");
+                goto error;
+            }
+            memset(new_seg_base->initialization, 0, sstrlen(parent->initialization) + 1);
+            memcpy(new_seg_base->initialization, parent->initialization, strlen(parent->initialization));
+        }
+
+    }
+
+error:
+
+    if (new_seg_base)
+        mpdparser_free_seg_base_type(new_seg_base);
+    return MPD_PARSE_ERROR;
+}
+
 int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode *Parent, xmlNode *a_node)
 {
     xmlNode *cur_node;
@@ -332,7 +397,21 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
             }
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
             {
-                if (mpdparser_parse_period_node(&new_mpd->Periods, cur_node))
+                if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentList") == 0)
+            {
+                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentTemplate") == 0)
+            {
+                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
                 {
                     goto error;
                 }
