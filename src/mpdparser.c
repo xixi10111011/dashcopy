@@ -416,7 +416,13 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
                     goto error;
                 }
             }
-        
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"AdaptationSet") == 0)
+            {
+                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            } 
         }
     
 
