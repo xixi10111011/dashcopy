@@ -369,7 +369,111 @@ error:
     return MPD_PARSE_ERROR;
 }
 
-int mpdparser_parse_representation_node()
+
+int mpdparser_get_xml_prop_string(xmlNode *a_node, const char *property_name, char **property_value)
+{
+    xmlChar *prop_str;
+    char *tmp_str;
+
+
+    prop_str = xmlGetProp(a_node, (const xmlChar *) property_name);
+    if (prop_str)
+    {
+        tmp_str = (char *)malloc(strlen(prop_str)+1);
+        if (!tmp_str)
+        {
+            LOG(FATAL, "malloc failed");
+            goto error;
+        }
+
+        memcpy(tmp_str, prop_str, strlen(prop_str) + 1);
+        *property_value = tmp_str;
+        xmlFree(prop_str);
+    }
+    return MPD_PARSE_ERROR;
+
+error:
+    if (prop_str)
+        xmlFree(prop_str);
+    return MPD_PARSE_ERROR;
+}
+
+int mpdparser_get_xml_prop_unsigned_integer(xmlNode *a_node, const char *property_name, unsigned int default_value, unsigned int *property_value;)
+{
+    xmlChar *prop_str;
+
+    *property_value = default_value;
+
+    prop_str = xmlGetProp(a_node, (const xmlChar *)property_name);
+    if (prop_str)
+    {
+        sscanf((char *)prop_str, "%u", property_value);
+    }
+
+    return MPD_PARSE_OK;
+}
+
+int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xmlNode *a_node,  struct AdaptationSetNode *parent)
+{
+
+    xmlNode *cur_node = 0;
+    struct RepresentationNode *new_representation = 0;
+
+    new_representation = (struct RepresentationNode *)malloc(sizeof(struct RepresentationNode));
+    if (!new_representation)
+    {
+        LOG(FATAL, "malloc failed");
+        return MPD_PARSE_ERROR;
+    }
+
+    if (mpdparser_get_xml_prop_string(a_node, "id", &new_representation->id))
+    {
+        goto error;
+    }
+    if (mpdparser_get_xml_prop_unsigned_integer(a_node, "bandwidth", 0, &new_representation->bandwidth))
+    {
+        goto error; 
+    }
+
+    for (cur_node = a_node->children; cur_node; cur_node = cur_node->next)
+    {
+        if (cur_node->type == XML_ELEMENT_NODE) 
+        {
+            if (xmlStrcmp(cur_node->name, (xmlChar *)"BaseURL") == 0 && !(new_mpd->BaseURL))       
+            {
+                if(mpdparser_parse_baseURL_node(&new_adpset->BaseURL, &new_adpset->PathURI, Parent->BaseURL, Parent->PathURI, cur_node))
+                {
+                    goto error; 
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
+            {
+                if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentList") == 0)
+            {
+                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            }
+            else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentTemplate") == 0)
+            {
+                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                {
+                    goto error;
+                }
+            }
+     
+        }
+    }
+
+
+}
+
 int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlNode *a_node, struct PeriodNode *parent)
 {
     xmlNode *cur_node = 0;
