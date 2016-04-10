@@ -316,7 +316,7 @@ void mpdparser_free_seg_base_type(struct SegmentBaseType *segbase)
 
     free(segbase);
 }
-
+#if 0
 int mpdparser_parse_seg_base_type(struct SegmentBaseType **ptr, xmlNode *a_node, struct SegmentBaseType *parent)
 {
     xmlNode *cur_node = 0;
@@ -368,6 +368,17 @@ error:
         mpdparser_free_seg_base_type(new_seg_base);
     return MPD_PARSE_ERROR;
 }
+#endif
+
+
+void mpdparser_free_segmenttemplate(struct SegmentTemplate *ptr)
+{
+}
+
+void mpdpasrer_free_segmentlist(struct SegmentList *ptr)
+{
+
+}
 
 
 int mpdparser_get_xml_prop_string(xmlNode *a_node, const char *property_name, char **property_value)
@@ -413,6 +424,31 @@ int mpdparser_get_xml_prop_unsigned_integer(xmlNode *a_node, const char *propert
     return MPD_PARSE_OK;
 }
 
+void mpdparser_free_representation(struct RepresentationNode *ptr)
+{
+    if (ptr->id)
+        free(ptr->id);
+
+    if (ptr->BaseURL)
+        free(ptr->BaseURL);
+
+    if (ptr->PathURI)
+        free(ptr->PathURI);
+
+    if (ptr->SegmentBase)
+        mpdparser_free_seg_base_type(ptr->SegmentBase);
+
+    if (ptr->SegmentList)
+        mpdparser_free_segmentlist(ptr->SegmentList);
+
+    if (ptr->SegmentTemplate)
+        mpdparser_free_segmenttemplate(ptr->SegmentTemplate);
+
+    free(ptr);
+
+    return;
+}
+
 int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xmlNode *a_node,  struct AdaptationSetNode *parent)
 {
 
@@ -425,6 +461,7 @@ int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xm
         LOG(FATAL, "malloc failed");
         return MPD_PARSE_ERROR;
     }
+    memset(new_representation, 0, sizeof(struct RepresentationNode));
 
     if (mpdparser_get_xml_prop_string(a_node, "id", &new_representation->id))
     {
@@ -446,6 +483,7 @@ int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xm
                     goto error; 
                 }
             }
+#if 0
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
             {
                 if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -453,6 +491,7 @@ int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xm
                     goto error;
                 }
             }
+#endif
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentList") == 0)
             {
                 //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -471,7 +510,60 @@ int mpdparser_parse_representation_node(struct RepresentationNode **ListHead, xm
         }
     }
 
+    if (!(*ListHead))
+    {
+        *ListHead = new_representation;
+    }
+    else
+    {
+        node = *ListHead;
+        while (node->next)
+        {
+            node = node->next;
+        }
 
+        node->next = new_representation;
+    }
+    
+    return MPD_PARSE_OK;
+
+
+error:
+    mpdparser_free_representatio(new_representation);
+    return MPD_PARSE_ERROR;
+}
+
+void mpdparser_free_adaptationset(struct AdaptationSetNode *ptr)
+{
+    struct RepresentationNode *node = 0, *next = 0;
+
+    if (ptr->BaseURL)
+        free(ptr->BaseURL);
+
+    if (ptr->PathURI)
+        free(ptr->PathURI);
+
+    if (ptr->SegmentBase)
+        mpdparser_free_seg_base_type(ptr->SegmentBase);
+
+    if (ptr->SegmentList)
+        mpdparser_free_segmentlist(ptr->SegmentList);
+
+    if (ptr->SegmentTemplate)
+        mpdparser_free_segmenttemplate(ptr->SegmentTemplate);
+
+    node = ptr->Representations;
+
+    while (node)
+    {
+        next = node->next;
+        mpdparser_free_representation(node);
+        node = next; 
+    }
+
+    free(ptr);
+
+    return;
 }
 
 int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlNode *a_node, struct PeriodNode *parent)
@@ -485,6 +577,7 @@ int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlN
         LOG(FATAL, "malloc failed");
         return MPD_PARSE_ERROR;
     }
+    memset(new_adpset, 0, sizeof(struct AdaptationSetNode));
 
     for (cur_node = a_node->children; cur_node; cur_node = cur_node->next)
     {
@@ -497,6 +590,7 @@ int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlN
                     goto error; 
                 }
             }
+#if 0
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
             {
                 if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -504,6 +598,7 @@ int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlN
                     goto error;
                 }
             }
+#endif
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentList") == 0)
             {
                 //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -529,14 +624,67 @@ int mpdparser_parse_adaptationset_node(struct AdaptationSetNode **ListHead, xmlN
  
     }
 
+    if (!(*ListHead))
+    {
+        *ListHead = new_adpset;
+    }
+    else
+    {
+        node = *ListHead;
+        while (node->next)
+        {
+            node = node->next;
+        }
+
+        node->next = new_adpset;
+    }
+    
+    return MPD_PARSE_OK;
 
 
+error:
+    mpdparser_free_adaptationset(new_adpset);
+    return MPD_PARSE_ERROR;
+}
+
+void mpdparser_free_period_node(struct PeriodNode *ptr)
+{
+    struct AdaptationSetNode *node = 0, *next = 0;
+
+    if (ptr->BaseURL)
+        free(ptr->BaseURL);
+
+    if (ptr->PathURI)
+        free(ptr->PathURI);
+
+    if (ptr->SegmentBase)
+        mpdparser_free_seg_base_type(ptr->SegmentBase);
+
+    if (ptr->SegmentList)
+        mpdparser_free_segmentlist(ptr->SegmentList);
+
+    if (ptr->SegmentTemplate)
+        mpdparser_free_segmenttemplate(ptr->SegmentTemplate);
+
+    node = ptr->AdaptationSets;
+
+    while (node)
+    {
+        next = node->next;
+        mpdparser_free_adaptationset(node);
+        node = next; 
+    }
+
+    free(ptr);
+
+    return;
 }
 
 int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode *Parent, xmlNode *a_node)
 {
     xmlNode *cur_node;
     struct PeriodNode *new_period = 0;
+    struct PeriodNode *node = 0;
 
     new_period = (struct PeriodNode *)malloc(sizeof(struct PeriodNode));
     if (!new_period)
@@ -544,6 +692,8 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
         LOG(FATAL, "malloc failed"); 
         return MPD_PARSE_ERROR;
     }
+
+    memset(new_period, 0, sizeof(struct PeriodNode));
 
     mpdparser_get_xml_prop_duration(a_node, "start", -1, &new_period->start);
     mpdparser_get_xml_prop_duration(a_node, "duration", -1, &new_period->start);
@@ -559,6 +709,7 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
                     goto error; 
                 }
             }
+#if 0
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentBase") == 0)
             {
                 if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -566,6 +717,7 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
                     goto error;
                 }
             }
+#endif
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentList") == 0)
             {
                 //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
@@ -588,15 +740,58 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
                 }
             } 
         }
-    
+    }
 
+    if (!(*PeriodsHead))
+    {
+        *PeriodsHead = new_period;
+    }
+    else
+    {
+        node = *PeriodsHead;
+        while (node->next)
+        {
+            node = node->next;
+        }
+
+        node->next = new_period;
+    }
+    
+    return MPD_PARSE_OK;
+
+error:
+    mpdparser_free_period_node(new_period);
+    return MPD_PARSE_ERROR;
+}
+
+void mpdparser_free_mpd_node(struct MPDNode *ptr)
+{
+    struct PeriodNode *node = ptr-Periods;
+    struct PeriodNode *next = 0;
+
+    while (node)
+    {
+        next = node->next;
+        mpdparser_free_period_node(node);
+        node = next;
+    }
+
+    if (ptr->BaseURL)
+        free(ptr->BaseURL);
+
+    if (ptr->PathURI)
+        free(ptr->PathURI);
+
+    free(ptr);
+
+    return; 
 }
 
 int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdURL)
 {
     xmlNode *cur_node;
     struct MPDNode *new_mpd;
-    char *mpdBaseURL;
+    char *mpd_baseurl = 0;
 
     new_mpd =(struct MPDNode *) malloc(sizeof(struct MPDNode));
     if (!new_mpd)
@@ -617,7 +812,7 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdUR
     mpdparser_get_xml_prop_duration(a_node, "mediaPresentationDuration", 0, &new_mpd->mediaPresentationDuration);
 
 
-    if (construct_mpd_baseurl(&mpdBaseURL, mpdURL))
+    if (construct_mpd_baseurl(&mpd_baseurl, mpdURL))
     {
         goto error;
     }
@@ -628,7 +823,7 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, char *mpdUR
         {
             if (xmlStrcmp(cur_node->name, (xmlChar *)"BaseURL") == 0 && !(new_mpd->BaseURL))       
             {
-                if(mpdparser_parse_baseURL_node(&new_mpd->BaseURL, &new_mpd->PathURI, mpdURL, NULL, cur_node))
+                if(mpdparser_parse_baseURL_node(&new_mpd->BaseURL, &new_mpd->PathURI, mpd_baseurl, NULL, cur_node))
                 {
                     goto error; 
                 }
@@ -653,5 +848,37 @@ error:
     return MPD_PARSE_ERROR;
 }
 
+int mpdparser_parse_mpd_buffer(struct MPDNode **ptr, const char *buffer, int len, const char *mpdurl)
+{
+    xmlDocPtr doc;
+    xmlNode *root_node = 0;
+    ret = MPD_PARSE_OK;
 
+    LIBXML_TEST_VERSION;
+
+    doc = xmlReadMemory(buffer, len, "noname.xml", NULL, XML_PARSE_NONET);
+    if (!doc)
+    {
+        LOG(FATAL, "xml read failed");
+        ret = MPD_PARSE_ERROR;
+    }
+    else
+    {
+        root_node = xmlDocGetRootElement(doc);
+
+        if (root_node->type != XML_ELEMENT_NODE
+            || xmlStrcmp(root_node->name, (xmlChar *)"MPD") != 0)
+        {
+            LOG(FATAL, "can not find MPD node");
+            ret = MPD_PARSE_ERROR;
+        }
+        else
+        {
+            ret = mpdparser_parse_root_node(ptr, root_node, mpdurl);
+        }
+        xmlFreeDoc(doc); 
+    }
+
+    return ret;
+}
 
