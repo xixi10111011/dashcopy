@@ -1,4 +1,5 @@
 #include "dashsrc.h"
+#include "mpdparser.h"
 
 
 int dashsrc_get_file_with_retry(const char *url, const char *filename)
@@ -22,5 +23,11 @@ int dashsrc_get_mpdfile(const char *mpdurl)
     return DASHSRC_ERROR;
 }
 
+void dashsrc_copy_all(struct MPDNode *mpd)
+{
+    struct PeriodNode *cur_period = 0;
 
+
+
+}
 

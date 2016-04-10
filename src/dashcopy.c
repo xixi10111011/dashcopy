@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         goto exit;
     }
 
-
+    dashsrc_copy_all(mpd);
     
 exit:
     http_cleanup();

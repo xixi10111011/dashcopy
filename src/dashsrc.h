@@ -10,6 +10,7 @@
 #define DASHCOPY_MPD_FILE_NAME  "dashcopy.mpd"
 
 int dashsrc_get_mpdfile(const char *mpdurl);
+void dashsrc_copy_all(struct MPDNode *mpd);
 
 
 
