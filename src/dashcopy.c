@@ -1,8 +1,10 @@
 #include <stdio.h> 
 #include <stdlib.h> 
+#include <string.h>
 #include "log.h"
 #include "http.h"
 #include "dashsrc.h"
+#include "mpdparser.h"
 
 
 int main(int argc, char **argv)
@@ -16,12 +18,12 @@ int main(int argc, char **argv)
     http_init();
 
     LOG(FATAL, "dashcopy: an utility that can copy MPEG DASH content from original server \n");
-    LOG(FATAL, "usage: ./dashcopy mpd_url");
+    LOG(FATAL, "usage: ./dashcopy the_mpd_url");
 
     if (argc != 2)
     {
         LOG(FATAL, "invalid input");
-        LOG(FATAL, "usage: ./dashcopy mpd_url");
+        LOG(FATAL, "usage: ./dashcopy the_mpd_url");
         goto exit;
     }
 

@@ -118,10 +118,12 @@ struct MPDNode
     long long mediaPresentationDuration;
     char *BaseURL;
     char *PathURI;
-    struct PeriodNode Periods;
+    struct PeriodNode *Periods;
 };
 
 
+int mpdparser_parse_mpd_buffer(struct MPDNode **ptr, const char *buffer, int len, const char *mpdurl);
+void mpdparser_free_mpd_node(struct MPDNode *ptr);
 
 
 

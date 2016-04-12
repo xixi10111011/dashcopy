@@ -1,6 +1,8 @@
 #ifndef _DASHSRC_H_
 #define _DASHSRC_H_
 
+#include "mpdparser.h"
+
 
 #define DASHSRC_OK       0
 #define DASHSRC_ERROR    1
