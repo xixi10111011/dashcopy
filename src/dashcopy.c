@@ -62,6 +62,7 @@ int main(int argc, char **argv)
         goto exit;
     }
 
+    LOG(FATAL, "start to copy content");
     dashsrc_copy_all(mpd);
     
 exit:

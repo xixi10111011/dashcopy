@@ -101,7 +101,7 @@ void dashsrc_copy_adaptationset(struct AdaptationSetNode *cur_adpt, long long  p
 void dashsrc_copy_representation(struct RepresentationNode *cur_rep, long long period_duration)
 {
 
-    if (cur_rep->SegmentList == 0 && cur_rep->SegmentTemplate) // single segment 
+    if (cur_rep->SegmentList == 0 && cur_rep->SegmentTemplate == 0) // single segment 
     {
         dashsrc_get_file_with_retry(cur_rep->BaseURL, cur_rep->PathURI);
     }
