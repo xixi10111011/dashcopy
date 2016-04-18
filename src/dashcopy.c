@@ -2,6 +2,7 @@
 #include <stdlib.h> 
 #include <string.h>
 #include "log.h"
+#include "util.h"
 #include "http.h"
 #include "dashsrc.h"
 #include "mpdparser.h"
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
     mpdfile_len = ftell(mpdfile);
     fseek(mpdfile, 0, SEEK_SET);
 
-    mpd_buffer = (char *)malloc(mpdfile_len + 1);
+    mpd_buffer = (char *)xmalloc(mpdfile_len + 1);
     memset(mpd_buffer, 0, mpdfile_len + 1);
     if (!mpd_buffer)
     {

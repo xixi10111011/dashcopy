@@ -42,7 +42,7 @@ struct SegmentTimelineNode
     struct SNode *SNodes;
 };
 
-struct MultSegmentBaseType
+struct MultiSegmentBaseType
 {
     unsigned int duration;
     unsigned int startNumber;
@@ -54,13 +54,13 @@ struct MultSegmentBaseType
 
 struct SegmentListNode
 {
-    struct MultSegmentBaseType *MultSegBaseType;
+    struct MultiSegmentBaseType *MultiSegBase;
     struct SegmentURLNode  *SegURLs;
 };
 
 struct SegmentTemplateNode
 {
-    struct MultSegmentBaseType *MultSegBaseType;
+    struct MultiSegmentBaseType *MultiSegBase;
     char *media;
     char *initialization;
 };

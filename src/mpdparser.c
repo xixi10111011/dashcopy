@@ -1,5 +1,6 @@
 #include "mpdparser.h"
 #include "log.h"
+#include "util.h"
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -478,6 +479,49 @@ int mpdparser_get_xml_prop_unsigned_integer(xmlNode *a_node, const char *propert
 }
 
 
+int mpdparser_parse_multi_segment_base(struct MultiSegmentBaseType **ptr, xmlNode *a_node, struct MultiSegmentBaseType *parent)
+{
+    xmlNode *cur_node = 0;
+    struct MultiSegmentBaseType *new_multi_segbase = 0;
+
+    new_multi_segbase = (struct MultiSegmentBaseType *)malloc(sizeof(struct MultiSegmentBaseType));
+    if (!new_multi_segbase)
+    {
+        LOG(FATAL, "malloc failed");
+        return MPD_PARSE_ERROR;
+    }
+
+    if (parent)
+    {
+    
+    }
+
+
+
+}
+int mpdparser_parse_segment_template(struct SegmentTemplateNode **ptr, xmlNode *a_node, struct SegmentTemplateNode *parent)
+{
+    struct SegmentTemplateNode *new_segment_template = 0;
+
+    new_segment_template = (struct SegmentListNode *)malloc(sizeof(struct SegmentTemplateNode));
+    if (!new_segment_template)
+    {
+        LOG(FATAL, "malloc failed");
+        goto error;
+    }
+
+    if(mpdparser_parse_multi_segment_base(&new_segment_template->MultiSegBase, a_node, parent?parent->MultiSegBase:0)) 
+    {
+        LOG(FATAL, "parse multi segment base failed");
+        goto error;
+    }
+
+error:
+    if (new_segment_template)
+        mpdparser_free_segmenttemplate(new_segment_template);
+    return MPD_PARSE_ERROR;
+}
+
 void mpdparser_free_representation(struct RepresentationNode *ptr)
 {
     if (ptr->id)
@@ -794,7 +838,7 @@ int mpdparser_parse_period_node(struct PeriodNode **PeriodsHead, struct MPDNode 
             }
             else if (xmlStrcmp(cur_node->name, (xmlChar *)"SegmentTemplate") == 0)
             {
-                //if (mpdparser_parse_seg_base_type(&new_period->SegmentBase, cur_node, 0))
+                if (mpdparser_parse_segment_template(&new_period->SegmentTemplate, cur_node, 0))
                 {
                     goto error;
                 }
@@ -863,7 +907,7 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, const char 
     struct MPDNode *new_mpd;
     char *mpd_baseurl = 0;
     int baseURLExsit = 0;
-
+#if 0
     new_mpd =(struct MPDNode *) malloc(sizeof(struct MPDNode));
     if (!new_mpd)
     {
@@ -872,7 +916,9 @@ int mpdparser_parse_root_node(struct MPDNode **ptr, xmlNode *a_node, const char 
     }
 
     memset(new_mpd, 0, sizeof(struct MPDNode));
+#endif
 
+    new_mpd =(struct MPDNode *)xmalloc(sizeof(struct MPDNode));
     mpdparser_get_xml_prop_type(a_node, "type", &new_mpd->type);
     if (new_mpd->type == MPD_TYPE_LIVE)
     {
